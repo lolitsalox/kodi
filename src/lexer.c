@@ -28,6 +28,7 @@ static tokenType_t findSymbol(char* s) {
         case '&': if (s[1] == s[0]) return TOKEN_BOOL_AND; 
         case '|': if (s[1] == s[0]) return TOKEN_BOOL_OR;  
         case '*': if (s[1] == s[0]) return TOKEN_POW;      
+        case '/': if (s[1] == s[0]) return TOKEN_LINE_COMMENT;      
 
         case '-': 
             if (s[1] == '>') return TOKEN_POINTER; 
@@ -204,6 +205,11 @@ static token_t* CollectSymbol (lexer_t* self) {
             self->Advance(self);
             type = tType;
         }
+    }
+
+    if (type == TOKEN_LINE_COMMENT) {
+        while (self->CanAdvance(self) && self->c != '\n') self->Advance(self);
+        return newToken("\\n", TOKEN_NL);
     }
 
     return newToken(value, type);

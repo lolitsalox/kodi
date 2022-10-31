@@ -13,7 +13,7 @@ static const char* astTypeNames[] = {
     "AST_BIN_OP",
     "AST_FUNCTION",
     "AST_ASSIGNMENT",
-    "AST_VARIABLE",
+    "AST_NAME",
     "AST_STATEMENT",
     "AST_CONDITIONAL_STATEMENT",
     "AST_UNARY_STATEMENT",
@@ -47,5 +47,8 @@ ast_t* newAst(astType_t type) {
 }
 
 const char* astTypeToStr(astType_t type) {
-    return astTypeNames[type];
+    if (type < ARRAYSIZE(astTypeNames) - 1)
+        return astTypeNames[type];
+
+    return astTypeNames[ARRAYSIZE(astTypeNames) - 1];
 }

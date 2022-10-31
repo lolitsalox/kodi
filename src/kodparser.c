@@ -4,17 +4,27 @@
 #include "ast/binOp.h"
 #include "ast/unOp.h"
 #include "ast/const.h"
+#include "ast/name.h"
+#include "ast/function.h"
+#include "ast/returnStatement.h"
+#include "ast/call.h"
+#include "ast/whileStatement.h"
+#include "ast/ifStatement.h"
+#include "ast/elifStatement.h"
+#include "ast/elseStatement.h"
 
 #include <stdio.h>
 #include <stdlib.h>
+
+#define SKIPNL { while(self->token->type == TOKEN_NL) Eat(self, TOKEN_NL); }
 
 static ast_t* Parse(parser_t* self);
 
 static token_t* Eat(parser_t* self, tokenType_t type);
 
 static ast_t* ParseCompound(parser_t* self);
-// static ast_t* ParseBlock(parser_t* self);
-// static ast_t* ParseStatement(parser_t* self, statementType_t stype);
+static ast_t* ParseBlock(parser_t* self);
+static ast_t* ParseStatement(parser_t* self, statementType_t stype);
 
 static ast_t* ParseExprAssignment(parser_t* self);  // = -> += -= etc
 static ast_t* ParseLogicalOr(parser_t* self);       // ||
@@ -67,9 +77,6 @@ static token_t* Eat(parser_t* self, tokenType_t type) {
         return NULL;
     }
 
-    if (self->token->type != TOKEN_EOF || self->token->type != TOKEN_NL)
-        free(self->token->value);
-    free(self->token);
     self->token = self->lexer->NextToken(self->lexer);
     return self->token;
 }
@@ -86,19 +93,66 @@ static ast_t* ParseCompound(parser_t* self) {
     return (ast_t*)compound;
 }
 
-// static ast_t* ParseBlock(parser_t* self) {
-//     astCompound_t* compound = newAstCompound();
-//     Eat(self, TOKEN_LBRACE);
+static ast_t* ParseBlock(parser_t* self) {
+    astCompound_t* compound = newAstCompound();
+    Eat(self, TOKEN_LBRACE);
+    SKIPNL
 
-//     while (self->token->type != TOKEN_RBRACE) {
-//         ast_t* value = ParseExprAssignment(self);
-//         if (value->type == AST_NOOP) { free(value); continue; }
-//         compound->children->PushBack(compound->children, value);
-//     }
+    while (self->token->type != TOKEN_RBRACE) {
+        SKIPNL
 
-//     Eat(self, TOKEN_RBRACE);
-//     return (ast_t*)compound;
-// }
+        ast_t* value = ParseExprAssignment(self);
+        if (value->type == AST_NOOP) { free(value); continue; }
+        compound->children->PushBack(compound->children, value);
+
+        SKIPNL
+    }
+
+    Eat(self, TOKEN_RBRACE);
+    return (ast_t*)compound;
+}
+
+static ast_t* ParseStatement(parser_t* self, statementType_t stype) {
+    switch (stype) {
+        case STATEMENT_RETURN: return (ast_t*) newAstReturnStatement(ParseLogicalOr(self));
+
+        case STATEMENT_WHILE: {
+            // Parse condition
+            ast_t* condition = ParseLogicalOr(self);
+            // Parse body
+            astCompound_t* body = (astCompound_t*)ParseBlock(self);
+            return (ast_t*) newAstWhileStatement(condition, body);
+        }
+
+        case STATEMENT_IF: {
+            // Parse condition
+            ast_t* condition = ParseLogicalOr(self);
+            // Parse body
+            astCompound_t* body = (astCompound_t*)ParseBlock(self);
+            return (ast_t*) newAstIfStatement(condition, body);
+        }
+
+        case STATEMENT_ELIF: {
+            // Parse condition
+            ast_t* condition = ParseLogicalOr(self);
+            // Parse body
+            astCompound_t* body = (astCompound_t*)ParseBlock(self);
+            return (ast_t*) newAstElifStatement(condition, body);
+        }
+        
+        case STATEMENT_ELSE: {
+            // Parse body
+            astCompound_t* body = (astCompound_t*)ParseBlock(self);
+            return (ast_t*) newAstElseStatement(body);
+        }
+
+        default:
+            fprintf(stderr, "ERROR: [Parser] still don't support %s\n", stype_to_str(stype));
+            exit(1);
+    }
+
+    return NULL;
+}
 
 static ast_t* ParseExprAssignment(parser_t* self) {
     ast_t* left = ParseLogicalOr(self);
@@ -296,26 +350,27 @@ static ast_t* ParseFirst(parser_t* self) {
     // a[] a() a.
     ast_t* value = ParseFactor(self);
     if (value->type == AST_NOOP) return value;
-    /*
+    
     switch (self->token->type) {
         case TOKEN_LPAREN: {
-            // ast_t* ast = ParseFactor(self);
-            // if (ast->type == AST_FUNCTION) {
-            //     if (value->type != AST_VARIABLE) {
-            //         fprintf(stderr, "[Parser]: invalid syntax for declaring a function\n");
-            //         exit(1);
-            //     }
-            //     ((astFunction_t*)ast)->name = ((astVariable_t*)value)->name;
-            //     free(value);
-            //     return ast;
-            // }
+            ast_t* ast = ParseFactor(self);
+            if (ast->type == AST_FUNCTION) {
+                if (value->type != AST_NAME) {
+                    fputs("[Parser]: invalid syntax for declaring a function", stderr);
+                    exit(1);
+                }
+                ((astFunction_t*)ast)->name = ((astName_t*)value)->name;
+                free(value);
+                return ast;
+            }
 
-            // if (ast->type != AST_COMPOUND) {
-            //     printf("[Parser]: TODO: what are u calling lol\n");
-            //     exit(1);
-            // }
+            if (ast->type != AST_COMPOUND) {
+                printf("[Parser]: TODO: what are u calling lol\n");
+                exit(1);
+            }
             
-            // return (ast_t*) newAstCall(value, (astCompound_t*) ast);
+            return (ast_t*) newAstCall(value, (astCompound_t*) ast);
+            puts("ERROR");
         }
 
         case TOKEN_LBRACKET: {
@@ -330,7 +385,7 @@ static ast_t* ParseFirst(parser_t* self) {
 
         default: break;
     }
-    */
+    
     return value;
 }
 
@@ -342,6 +397,65 @@ static ast_t* ParseFactor(parser_t* self) {
         case TOKEN_FLOAT:   ast = (ast_t*) newAstConst(AST_FLOAT,   self->token->value); break;
         case TOKEN_STRING:  ast = (ast_t*) newAstConst(AST_STRING,  self->token->value); break;
         
+        case TOKEN_ID: {
+            // there is a chance that this is a keyword
+            
+            statementType_t stype = str_to_stype(self->token->value);
+            if (stype != STATEMENT_UNKNOWN) {
+                // this is a keyword
+                Eat(self, self->token->type);
+                return ParseStatement(self, stype);
+            }
+
+            ast = (ast_t*) newAstName(self->token->value);
+            break;
+        }
+
+        case TOKEN_LPAREN: { // () {}, (1, 2, 3)
+            Eat(self, TOKEN_LPAREN);
+            // ()
+            // (expression) == expression
+            // (expression,) == expression,
+            // (expression, expression) == expression, expression
+            // () {}
+            astCompound_t* compound = newAstCompound();
+            
+            SKIPNL
+
+            if (self->token->type != TOKEN_RPAREN) {
+                ast_t* value = ParseExprAssignment(self);
+                if (value->type != AST_NOOP)
+                    compound->children->PushBack(compound->children, value);
+                else free(value);
+            }
+
+            SKIPNL
+            while (self->token->type == TOKEN_COMMA) {
+                Eat(self, TOKEN_COMMA);
+                SKIPNL
+
+                ast_t* value = ParseExprAssignment(self);
+                if (value->type != AST_NOOP)
+                    compound->children->PushBack(compound->children, value);
+                else free(value);
+
+                SKIPNL
+            }
+            
+            Eat(self, TOKEN_RPAREN);
+
+            SKIPNL
+            if (self->token->type == TOKEN_LBRACE) {
+                // todo: check for invalid parameters
+
+                ast_t* body = ParseBlock(self);
+                return (ast_t*) newAstFunction(NULL, compound, (astCompound_t*)body);
+            }
+
+            return (ast_t*) compound;
+            break;
+        }
+
         default: ast = newAst(AST_NOOP); break;
     }
     

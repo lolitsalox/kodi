@@ -15,7 +15,7 @@ CFLAGS = -g -m64 -Wall -pedantic-errors
 target: ${OBJS} link
 	
 ${OBJDIR}/%.o: ${SRCDIR}/%.c
-	${CC} ${CFLAGS} -c $^ -o $@
+	${CC} ${CFLAGS} -Isrc/include -c $^ -o $@
 
 link:
 	${CC} ${OBJS} -o ${TARGET}.exe
@@ -23,6 +23,7 @@ link:
 setup:
 	@mkdir $(SRCDIR)
 	@mkdir $(OBJDIR)
+	@mkdir $(OBJDIR)/ast
 
 clean:
 	del /s *.o

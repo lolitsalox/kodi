@@ -1,1 +1,23 @@
-5 + 10
+main(a) {
+    while 1 {
+        print("hello!")
+    }
+}
+
+// load_const code     // an index to the code inside the constant pool
+// load_const name     // an index to the string inside the constant pool
+// make_func           // creates the function inside the vm
+// ^ - the following instructions build the function signature
+// v - says the name of the function is that uh name
+
+// let's cover instructions for basic things
+// functions are a little too complex for me to think about in the byte code level
+//
+// an instruction for each operator
+// jumps and comparisons
+// load_const (loads a constant from the constant pool)
+// load_name (loads a name from the namespace)
+// store_name (stores the last thing on the stack into the namespace with a name I think)
+// load_fast (loads an argument)
+
+// Uh... What about break and continue? Also, true and false and boolean type and null/none type

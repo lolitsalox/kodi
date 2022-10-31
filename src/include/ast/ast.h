@@ -2,6 +2,10 @@
 
 #include <stddef.h>
 
+#ifndef ARRAYSIZE
+#define ARRAYSIZE(arr) (sizeof(arr) / sizeof(arr[0]))
+#endif
+
 // make clean if u want to update this
 #define INDENT_SCALAR 4
 #define INDENT(x) for (size_t i = 0; i < (x) * INDENT_SCALAR; ++i) \
@@ -17,7 +21,7 @@ typedef enum astType_t {
     AST_BIN_OP,
     AST_FUNCTION,
     AST_ASSIGNMENT,
-    AST_VARIABLE,
+    AST_NAME,
     AST_STATEMENT,
     AST_CONDITIONAL_STATEMENT,
     AST_UNARY_STATEMENT,

@@ -10,3 +10,9 @@ typedef struct ByteCode {
 } ByteCode;
 
 ByteCode* gen_bytekod(const char* filename);
+
+// typedef struct CodeObjectInfo {
+//     uint16_t tag; // code object
+//     uint16_t size; // size of the bytecode
+//     uint8_t* bytecode;
+// } CodeObjectInfo;

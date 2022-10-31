@@ -2,11 +2,19 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
+static void Print(astConst_t* self, size_t indent) {
+    INDENT(indent)
+    printf("%s - %s\n", astTypeToStr(self->base.type), self->value);
+}
 
 void AstConst(astConst_t* self, astType_t type, char* value) {
     Ast(&self->base, type);
+    self->base.Print = (void (*)(ast_t*, size_t)) Print;
 
-    self->value = value;
+    self->value = (char*) malloc(strlen(value) + 1);
+    strcpy(self->value, value);
 }
 
 astConst_t* newAstConst(astType_t type, char* value) {

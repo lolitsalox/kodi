@@ -1,0 +1,103 @@
+LOAD_CONST  - loads an object from the constant pool into the stack
+
+LOAD_FAST   - loads an object from the args list into the stack
+
+STORE_FAST  - pops an object from the stack and stores it inside the args list of the current function
+
+LOAD_NAME   - pops an object from the stack and maps it to a name in the names map
+
+STORE_NAME  - loads an object from the name map into the stack
+
+BIN_OP      - pops two objects from the stack and pushes the result of the two operands using the operator
+
+UN_OP       - pops one object from the stack and pushes the result of the operand using the operator
+
+CJMP        - pops a value and if it is true, jumps to a relative address in the code object (ip + offset) 
+
+CNJMP       - pops a value and if it is false, jumps to a relative address in the code object (ip + offset) 
+
+JMP         - jumps to a relative address in the code object (ip + offset)
+
+FUNCTION    - pops name and code object and stores it inside the names map
+
+CALL        - pops n size of args, pops all the argument objects, pops the function name, 
+            - searches inside name map and creates a new function frame object        
+
+RETURN      - stops the running of the code object (for now)
+
+
+enum constType_t {
+    OBJECT, // any object that is not primitive
+    NAME, // name constant (utf8)
+    CODE, // code object
+    INT,  // int object
+    FLOAT,  // float object
+    STRING,  // string object
+    CLASS, // definition of class
+    METHOD, // some attribute
+    FIELD, // some attribute
+};
+
+struct kod_file {
+    char magic[4]; // 'kod\0'
+    u1* filename;
+    u2 major_ver;
+    u2 minor_ver;
+
+    u4 const_pool_size;
+    const_info** const_pool;
+
+};
+
+struct const_info {
+    constType_t type;
+};
+
+struct object_info {
+    const_info base;
+    u4 class_index; // index to the class inside the constant pool
+};
+
+struct name_info {
+    const_info base;
+    u1* name; // a cstr 
+};
+
+struct code_info {
+    const_info base;
+    u4 code_size;
+    u1* code;
+};
+
+struct class_info {
+    const_info base;
+    u4 name_index; // index to the name constant of the class
+    u4 attributes_size;
+    const_info** attributes_size;
+};
+
+struct method_info {
+    const_info base;
+    u4 name_index; // index to the name constant of the method
+    u4 code_index; // index to the code object of the method
+};
+
+struct field_info {
+    const_info base;
+    u4 name_index; // index to the name constant of the field
+};
+
+struct int_info {
+    const_info base;
+    u4 value;
+};
+
+struct float_info {
+    const_info base;
+    u8 value; // double ye idc
+};
+
+struct string_info {
+    const_info base;
+    u1* str;
+};

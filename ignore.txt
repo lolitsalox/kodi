@@ -4,9 +4,9 @@ LOAD_FAST   - loads an object from the args list into the stack
 
 STORE_FAST  - pops an object from the stack and stores it inside the args list of the current function
 
-LOAD_NAME   - pops an object from the stack and maps it to a name in the names map
+LOAD_NAME   - loads an object from the name map into the stack
 
-STORE_NAME  - loads an object from the name map into the stack
+STORE_NAME  - pops an object from the stack and maps it to a name in the names map
 
 BIN_OP      - pops two objects from the stack and pushes the result of the two operands using the operator
 

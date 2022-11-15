@@ -13,9 +13,17 @@ static void Print(astCompound_t* self, size_t indent) {
     }
 }
 
+static void CodeGen(astCompound_t* self, kod_t* context) {
+    for (size_t i = 0; i < self->children->size; ++i) {
+        ast_t* child = (ast_t*) self->children->items[i];
+        child->CodeGen(child, context);
+    }
+}
+
 void AstCompound(astCompound_t* self) {
     Ast(&self->base, AST_COMPOUND);    
     self->base.Print = (void (*)(ast_t*, size_t)) Print;
+    self->base.CodeGen = (void (*)(ast_t*, kod_t*)) CodeGen;
 
     self->children = newList(sizeof(ast_t*));
 }

@@ -28,6 +28,7 @@ struct ast_t {
     astType_t type;
 
     void (*Print) (ast_t* self, size_t indent);
+    void (*CodeGen) (ast_t* self, kod_t* context);
 };
 
 void Ast(ast_t* self, astType_t type);

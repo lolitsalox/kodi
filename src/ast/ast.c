@@ -29,10 +29,15 @@ static void Print(ast_t* self, size_t indent) {
     printf("%s\n", astTypeToStr(self->type));
 }
 
+static void CodeGen(ast_t* self, kod_t* context) {
+    printf("NO CODE GEN: %s\n", astTypeToStr(self->type));
+}
+
 void Ast(ast_t* self, astType_t type) {
     self->type = type;
 
     self->Print = Print;
+    self->CodeGen = CodeGen;
 }
 
 ast_t* newAst(astType_t type) {

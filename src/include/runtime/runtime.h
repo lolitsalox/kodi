@@ -14,6 +14,8 @@ struct runtime_t {
     size_t ip;
 };
 
+void run(const char* filename);
+
 // void Runtime(runtime_t* self, uint8_t* bytecode, size_t size);
 // runtime_t* newRuntime(uint8_t* bytecode, size_t size);
 
